@@ -1,0 +1,63 @@
+version: "3.7"
+
+volumes:
+  paackpgvolume:
+    name: paack-pg-volume
+
+networks:
+  paacknetwork:
+    name: paack-network
+
+services:
+  pg:
+    image: postgres:12.1
+    restart: on-failure
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    volumes:
+      - paackpgvolume:/var/lib/postgresql/data
+    networks:
+      - paacknetwork
+  crmintegrator:
+    build:
+      context: .
+      dockerfile: crmintegrator/Dockerfile
+    restart: on-failure
+    depends_on:
+      - pg
+      - mockcrm
+    ports:
+      - "${GRPC_PORT}:${GRPC_PORT}"
+    networks:
+      - paacknetwork
+    env_file:
+      - .env
+    entrypoint: ["/bin/bash", "./entrypoint.sh"]
+  csvreader:
+    build:
+      context: .
+      dockerfile: csvreader/Dockerfile
+    restart: on-failure
+    depends_on:
+      - crmintegrator
+    ports:
+      - "${CSV_HTTP_PORT}:${CSV_HTTP_PORT}"
+    networks:
+      - paacknetwork
+    env_file:
+      - .env
+    entrypoint: ["/bin/bash", "./entrypoint.sh"]
+  mockcrm:
+    build:
+      context: .
+      dockerfile: mockcrm/Dockerfile
+    restart: on-failure
+    ports:
+      - "${CRM_HTTP_PORT}:${CRM_HTTP_PORT}"
+    networks:
+      - paacknetwork
+    env_file:
+      - .env
+    entrypoint: ["/bin/bash", "./entrypoint.sh"]

@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package pb;
+
+message UserBatchReq {
+    repeated User users = 1;
+}
+
+message UserBatchRsp {
+    bool success = 1;
+}
+
+service UserService {
+    rpc ProcessUserBatch (UserBatchReq) returns (UserBatchRsp) {}
+}
+
+message User {
+    int64  id = 1;
+    string firstName = 2;
+    string lastName = 3;
+    string email = 4;
+    string phone = 5;
+}
